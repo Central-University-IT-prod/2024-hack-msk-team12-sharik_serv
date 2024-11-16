@@ -1,0 +1,34 @@
+*.md
+*.log
+*.jar
+*.war
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Gradle
+gradle/
+gradlew*
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+*.class
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*
+Dockerfile*
+
+# Git
+*.git
+*.gitattributes
+*.gitignore

@@ -1,0 +1,39 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  tags:
+    - docker
+  variables:
+    DOCKER_HOST: "unix:///runner/services/docker/docker.sock"
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  services:
+    - docker:24.0.5-dind
+  image: docker:24.0.5-git
+  before_script:
+    - docker info
+    - git --version
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker build --no-cache --pull -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  only:
+    - master
+    - ci
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  variables:
+    DOCKER_LOGIN_COMMAND: "echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin"
+  before_script:
+    - apk add --no-cache openssh-client
+  script:
+    - echo "$SSH_PRIVATE_KEY" > private_key.pem
+    - chmod 600 private_key.pem
+    - ssh -o StrictHostKeyChecking=no -i private_key.pem $DEPLOY_USER@$REMOTE_SERVER "$DOCKER_LOGIN_COMMAND && cd /opt/sharik && docker compose pull && docker compose --profile all down && docker compose --profile all up -d"
+  only:
+    - master
+    - cd
